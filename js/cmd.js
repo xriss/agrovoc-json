@@ -14,16 +14,17 @@ cmd.run=function(argv)
 {
 	if( argv._[0]=="import" )
 	{
-		var filename=argv._[1] || argv.filename;
-		if(filename)
+		var filename1=argv._[1] || argv.xml;
+		var filename2=argv._[2] || argv.json;
+		if(filename1)
 		{
-			return require("./parsexml.js").import(filename);
+			return require("./parsexml.js").import(filename1,filename2);
 		}
 	}
 	// help text
 	console.log(
 		"\n"+
-		">	agrovoc-json parse filename.xml \n"+
+		">	agrovoc-json parse filename.xml filename.json\n"+
 		"Import agrovoc rdf xml and output a json file.\n"+
 		"\n"+
 		"\n"+

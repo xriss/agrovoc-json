@@ -5,11 +5,14 @@ var parsexml=exports;
 var fs = require('fs');
 var expat = require('node-expat');
 
+var json_stringify = require('json-stable-stringify')
+
+
 var util=require('util');
 var ls=function(a) { console.log(util.inspect(a,{depth:null})); }
 
 
-parsexml.import=function(filename)
+parsexml.import=function(filename,filenameout)
 {
 	
 	var elems={}
@@ -89,10 +92,20 @@ parsexml.import=function(filename)
 				{
 					if( top["xml:lang"] && top[1] && top[1][0] )
 					{
-						desc[ top["xml:lang"] ]=top[1][0]
+						if( top["xml:lang"]=="en" ) // only want english?
+						{
+							desc[ top["xml:lang"] ]=top[1][0]
+						}
 					}
 				}
 			}
+		}
+		else
+		if(top[0]=="broader")
+		{
+			if(!desc.parents) { desc.parents=[] }
+			var name=top["rdf:resource"].replace("http://aims.fao.org/aos/agrovoc/","")
+			desc.parents.push(name)
 		}
 
 		stack.pop();
@@ -124,11 +137,28 @@ parsexml.import=function(filename)
 
 			for(n in ids) { var v=ids[n]
 				delete v.url
+				if(v.parents)
+				{
+					for( np in v.parents){ var vp=v.parents[np] // scan parents
+						var it=ids[vp]
+						if(it)
+						{
+							if(!it.children) { it.children=[] } // link to children
+							it.children.push(n)
+						}
+					}
+				}
 			}
 
 
-//			ls(tags)
-			ls(ids)
+			if(filenameout)
+			{
+				fs.writeFile( filenameout , json_stringify(ids,{ space: ' ' }) )
+			}
+			else
+			{
+				console.log( json_stringify(ids,{ space: ' ' }) )
+			}
 		}
 
 	});
