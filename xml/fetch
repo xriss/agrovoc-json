@@ -1,0 +1,2 @@
+wget https://bitbucket.org/aims-fao/agrovoc/downloads/agrovoc_2017-05-04_core.rdf.zip
+unzip agrovoc_2017-05-04_core.rdf.zip

@@ -26,7 +26,9 @@ parsexml.import=function(filename,filenameout)
 	var parser = new expat.Parser('UTF-8');
 	
 	var desc={}
-	var resource={}
+	var resource={ label:{} , alt:{} , all:{} }
+	var resource_names={"label":true}
+	var resource_mode=""
 
 	parser.on('startElement', function (name, attrs) {
 //		var parent=top;
@@ -40,42 +42,57 @@ parsexml.import=function(filename,filenameout)
 
 		if(top[0]=="rdf:Description")
 		{
-			if(top["rdf:about"])
+			var url=top["rdf:about"]
+			if(url)
 			{
 				var it
-				var name=top["rdf:about"]
 				
-//				if( name.substr(0,2)=="c_" )
-//				{
-					desc=tags[ name ]
-					if( ! desc )
-					{
-						desc={}
-						tags[ name ]=desc
-					}
-//				}
-//				else
-//				{
-//					desc=resource[ top["rdf:about"] ]
-//				}
+				desc=tags[ url ]
+				if( ! desc )
+				{
+					desc={}
+					tags[ url ]=desc
+				}
 				
 				if(desc)
 				{
-					desc.url=top["rdf:about"]
-//					desc.name=name
+					desc.url=url
 				}
 			}
+		}
+		else
+		if(top[0]=="prefLabel")
+		{
+			resource_mode="label"
+		}
+		else
+		if(top[0]=="altLabel")
+		{
+			resource_mode="alt"
 		}
 		
 		if(top["rdf:resource"])
 		{
-			if( resource[ top["rdf:resource"] ] ) // do we have list
+			if( resource[resource_mode] )
 			{
-				resource[ top["rdf:resource"] ].push(desc) // add to list
-			}
-			else
-			{
-				resource[ top["rdf:resource"] ]=[desc] // create new list
+				if( resource[resource_mode][ top["rdf:resource"] ] ) // do we have list
+				{
+					resource[resource_mode][ top["rdf:resource"] ].push(desc) // add to list
+				}
+				else
+				{
+					resource[resource_mode][ top["rdf:resource"] ]=[desc] // create new list
+				}
+
+				if( resource.all[ top["rdf:resource"] ] ) // do we have list
+				{
+					resource.all[ top["rdf:resource"] ].push(desc) // add to list
+				}
+				else
+				{
+					resource.all[ top["rdf:resource"] ]=[desc] // create new list
+				}
+
 			}
 		}
 		
@@ -86,17 +103,12 @@ parsexml.import=function(filename,filenameout)
 		
 		if(top[0]=="literalForm")
 		{
-			if( (top["xmlns"]=="http://www.w3.org/2008/05/skos-xl#") ) // && (top["xml:lang"]=="en") )
+			if(desc)
 			{
-				if(desc)
+				if( top["xml:lang"] && top[1] && top[1][0] )
 				{
-					if( top["xml:lang"] && top[1] && top[1][0] )
-					{
-						if( top["xml:lang"]=="en" ) // only want english?
-						{
-							desc[ top["xml:lang"] ]=top[1][0]
-						}
-					}
+					desc.any=desc.any || top[1][0]
+					desc[ top["xml:lang"] ]=top[1][0]
 				}
 			}
 		}
@@ -121,19 +133,63 @@ parsexml.import=function(filename,filenameout)
 					ids[name]=v
 				}
 			}
-			for(n in tags) { var v=tags[n]
-				if( resource[ n ] )
+			
+			var bubble_up=function(url,name,value)
+			{
+				var map={}
+				map[url]=true
+				var dirty=true
+				while(dirty)
 				{
-					var o=resource[ n ]
+					dirty=false
+					for(var n in map)
+					{
+						var o=resource.all[ url ]
+						if(o)
+						{
+							for(i=0;i<o.length;i++)
+							{
+								if( !map[o.url] )
+								{
+									dirty=true
+									map[o.url]=o
+								}
+							}
+						}
+					}
+				}
+				
+				for(var n in map)
+				{
+					var v=map[n]
+					if(typeof v == "object")
+					{
+						v[name]=value
+					}
+				}
+				
+			}
+
+			for(var resource_name in resource_names ) // copy values upwards
+			{
+				for(n in tags) { var v=tags[n]
+					var o=resource[ resource_name ][ n ]
 					if(o)
 					{
 						for(i=0;i<o.length;i++)
 						{
-							for(n2 in v) { o[i][n2]=o[i][n2] || v[n2] } // merge
+							o[i][resource_name]=o[i][resource_name] || v.any // pick any
+							if(v.en) { o[i][resource_name]=v.en } // prefer english
 						}
 					}
 				}
 			}
+
+			for(n in tags) { var v=tags[n]
+				if(v.label) { bubble_up(n,"label",v.label) }
+//				if(v.alt)   { bubble_up(n,"alt",v.alt) }
+			}
+
 
 			for(n in ids) { var v=ids[n]
 				delete v.url
@@ -159,6 +215,8 @@ parsexml.import=function(filename,filenameout)
 			{
 				console.log( json_stringify(ids,{ space: ' ' }) )
 			}
+
+//			fs.writeFile( "xml/core.json" , json_stringify(tags,{ space: ' ' }) )
 		}
 
 	});
