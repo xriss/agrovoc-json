@@ -15,6 +15,55 @@ var ls=function(a) { console.log(util.inspect(a,{depth:null})); }
 parsexml.import=function(filename,filenameout)
 {
 	
+	var write_tsv=function(filename,ids)
+	{
+		var fp=fs.openSync(filename,"w")
+		
+		var dupe=function(dat)
+		{
+			var t=[]
+			for(var i=0;i<dat.length;i++)
+			{
+				t[i]=dat[i]
+			}
+			return t
+		}
+		
+		var recurse
+		recurse=function(id,dat)
+		{
+			if(!dat) // init
+			{
+				dat=[]
+			}
+			dat.push(id)
+			var it=ids[id]
+			if(it.parents) // recurse
+			{
+				for(var ip in it.parents)
+				{
+					var vp=it.parents[ip]
+					var dp=dupe(dat)
+					recurse(vp,dp)
+				}
+			}
+			else // stop and print
+			{
+				var t=[]
+				for(var i=0;i<dat.length;i++)
+				{
+					t[i]= dat[i]+"\t"+ids[ dat[i] ].label
+				}
+				fs.writeSync(fp,t.join("\t")+"\n")
+			}
+		}
+		for(var id in ids)
+		{
+			recurse(id)
+		}
+		
+		fs.close(fp)
+	}
 	var elems={}
 	var tags={}
 	
@@ -210,6 +259,7 @@ parsexml.import=function(filename,filenameout)
 			if(filenameout)
 			{
 				fs.writeFile( filenameout , json_stringify(ids,{ space: ' ' }) )
+				write_tsv( filenameout+".tsv" , ids )
 			}
 			else
 			{
