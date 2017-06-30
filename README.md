@@ -1,8 +1,8 @@
 # agrovoc-json
 
-The [AGROVOC Core RDF data dump](https://aims-fao.atlassian.net/wiki/spaces/AGV/pages/2949126/Releases) is a zipped file of 34.8mb that extracts to a 947.6mb XML file.
+The [AGROVOC Core RDF data dump](https://aims-fao.atlassian.net/wiki/spaces/AGV/pages/2949126/Releases) is a 34.8mb zip that extracts to 947.6mb XML.
 
-This huge file has been whittled down to a 3.1mb JSON
+This huge file has been whittled down to a 3.1mb JSON.
 
 We've chosen the English (xl_en) translations except in circumstances where there isn't, we will pick a random language.
 
