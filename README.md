@@ -9,10 +9,11 @@ We've chosen the English (xl_en) translations except in circumstances where ther
 # The data
 
 [agrovoc.json](https://github.com/xriss/agrovoc-json/blob/master/json/agrovoc.json) (3.1mb)
+[agrovoc.tsv](https://github.com/xriss/agrovoc-json/blob/master/json/agrovoc.tsv) (6.45mb)
 
 # Updates
 
-You can always [download an updated data dump](https://aims-fao.atlassian.net/wiki/spaces/AGV/pages/2949126/Releases) and run the script to create a new JSON.
+You can always [download an updated data dump](https://aims-fao.atlassian.net/wiki/spaces/AGV/pages/2949126/Releases) and run the script to create a new JSON and TSV file.
 
 1. Unzip the zip file into the [xml folder](https://github.com/xriss/agrovoc-json/tree/master/xml)
 2. Run this script from root ```./agrovoc-json import xml/core.rdf json/agrovoc.json```
