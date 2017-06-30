@@ -17,7 +17,7 @@ parsexml.import=function(filename,filenameout)
 	
 	var write_tsv=function(filename,ids)
 	{
-		var fp=fs.openSync(filename,"w")
+		var lines=[]
 		
 		var dupe=function(dat)
 		{
@@ -54,7 +54,7 @@ parsexml.import=function(filename,filenameout)
 				{
 					t[i]= dat[i]+"\t"+ids[ dat[i] ].label
 				}
-				fs.writeSync(fp,t.join("\t")+"\n")
+				lines.push(t.join("\t"))
 			}
 		}
 		for(var id in ids)
@@ -62,7 +62,8 @@ parsexml.import=function(filename,filenameout)
 			recurse(id)
 		}
 		
-		fs.close(fp)
+		lines.sort()		
+		fs.writeFile( filename , lines.join("\n") )
 	}
 	var elems={}
 	var tags={}
