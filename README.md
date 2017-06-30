@@ -9,7 +9,7 @@ We've chosen the English (xl_en) translations except in circumstances where ther
 # The data
 
 [agrovoc.json](https://github.com/xriss/agrovoc-json/blob/master/json/agrovoc.json) (3.1mb)  
-[agrovoc.json.tsv](https://github.com/xriss/agrovoc-json/blob/master/json/agrovoc.json.tsv) (6.45mb)
+[agrovoc.json.tsv](https://github.com/xriss/agrovoc-json/blob/master/json/agrovoc.json.tsv) (6.8mb)
 
 # Updates
 
