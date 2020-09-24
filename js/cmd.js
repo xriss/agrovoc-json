@@ -10,7 +10,7 @@ var path=require('path');
 var ls=function(a) { console.log(util.inspect(a,{depth:null})); }
 
 
-cmd.run=function(argv)
+cmd.run=async function(argv)
 {
 	if( argv._[0]=="import" )
 	{
@@ -18,7 +18,7 @@ cmd.run=function(argv)
 		var filename2=argv._[2] || argv.json;
 		if(filename1)
 		{
-			return require("./parsexml.js").import(filename1,filename2);
+			return await require("./parsexml.js").parse(filename1,filename2);
 		}
 	}
 	// help text

@@ -3,7 +3,7 @@ var parsexml=exports;
 
 
 var fs = require('fs');
-var expat = require('node-expat');
+var sax = require('sax');
 
 var json_stringify = require('json-stable-stringify')
 
@@ -12,7 +12,7 @@ var util=require('util');
 var ls=function(a) { console.log(util.inspect(a,{depth:null})); }
 
 
-parsexml.import=function(filename,filenameout)
+parsexml.parse=async function(filename,filenameout)
 {
 	
 	var write_tsv=function(filename,ids)
@@ -63,7 +63,7 @@ parsexml.import=function(filename,filenameout)
 		}
 		
 		lines.sort()		
-		fs.writeFile( filename , lines.join("\n") )
+		fs.writeFileSync( filename , lines.join("\n") )
 	}
 	var elems={}
 	var tags={}
@@ -73,14 +73,16 @@ parsexml.import=function(filename,filenameout)
 	var top={};stack.push(top);
 	var cdata=false;
 
-	var parser = new expat.Parser('UTF-8');
+	var parser = sax.createStream(false,{});
 	
 	var desc={}
 	var resource={ label:{} , alt:{} , all:{} }
 	var resource_names={"label":true}
 	var resource_mode=""
 
-	parser.on('startElement', function (name, attrs) {
+	parser.onopentag=function (tag) {
+		var name=tag.name
+		var attrs=tag.attributes
 //		var parent=top;
 		top={};stack.push(top);
 		for(n in attrs) { top[n]=attrs[n]; }
@@ -90,9 +92,9 @@ parsexml.import=function(filename,filenameout)
 
 		elems[name]=(elems[name] || 0)+1
 
-		if(top[0]=="rdf:Description")
+		if(top[0]=="RDF:DESCRIPTION".toUpperCase())
 		{
-			var url=top["rdf:about"]
+			var url=top["RDF:ABOUT".toUpperCase()]
 			if(url)
 			{
 				var it
@@ -111,168 +113,79 @@ parsexml.import=function(filename,filenameout)
 			}
 		}
 		else
-		if(top[0]=="prefLabel")
+		if(top[0]=="PREFLABEL".toUpperCase())
 		{
 			resource_mode="label"
 		}
 		else
-		if(top[0]=="altLabel")
+		if(top[0]=="ALTLABEL".toUpperCase())
 		{
 			resource_mode="alt"
 		}
 		
-		if(top["rdf:resource"])
+		if(top["RDF:RESOURCE"])
 		{
 			if( resource[resource_mode] )
 			{
-				if( resource[resource_mode][ top["rdf:resource"] ] ) // do we have list
+				if( resource[resource_mode][ top["RDF:RESOURCE"] ] ) // do we have list
 				{
-					resource[resource_mode][ top["rdf:resource"] ].push(desc) // add to list
+					resource[resource_mode][ top["RDF:RESOURCE"] ].push(desc) // add to list
 				}
 				else
 				{
-					resource[resource_mode][ top["rdf:resource"] ]=[desc] // create new list
+					resource[resource_mode][ top["RDF:RESOURCE"] ]=[desc] // create new list
 				}
 
-				if( resource.all[ top["rdf:resource"] ] ) // do we have list
+				if( resource.all[ top["RDF:RESOURCE"] ] ) // do we have list
 				{
-					resource.all[ top["rdf:resource"] ].push(desc) // add to list
+					resource.all[ top["RDF:RESOURCE"] ].push(desc) // add to list
 				}
 				else
 				{
-					resource.all[ top["rdf:resource"] ]=[desc] // create new list
+					resource.all[ top["RDF:RESOURCE"] ]=[desc] // create new list
 				}
 
 			}
 		}
 		
 
-	});
+	}
 
-	parser.on('endElement', function (name) {
+	var pipcount=0;
+	parser.onclosetag=function (name) {
+
+		pipcount--
+		if(pipcount<=0)
+		{
+			process.stdout.write(name[0]);
+			pipcount=1000;
+		}
 		
-		if(top[0]=="literalForm")
+		if(top[0]=="LITERALFORM")
 		{
 			if(desc)
 			{
-				if( top["xml:lang"] && top[1] && top[1][0] )
+				if( top["XML:LANG"] && top[1] && top[1][0] )
 				{
 					desc.any=desc.any || top[1][0]
-					desc[ top["xml:lang"] ]=top[1][0]
+					desc[ top["XML:LANG"] ]=top[1][0]
 				}
 			}
 		}
 		else
-		if(top[0]=="broader")
+		if(top[0]=="BROADER")
 		{
 			if(!desc.parents) { desc.parents=[] }
-			var name=top["rdf:resource"].replace("http://aims.fao.org/aos/agrovoc/","")
+			var name=top["RDF:RESOURCE"].replace("http://aims.fao.org/aos/agrovoc/","")
 			desc.parents.push(name)
 		}
 
 		stack.pop();
 		top=stack[stack.length-1];
+		
+	}
 
-		if(stack.length==1)
-		{
-			var ids={}
-			for(n in tags) { var v=tags[n]
-				var name=n.replace("http://aims.fao.org/aos/agrovoc/","")
-				if( name.substr(0,2)=="c_" )
-				{
-					ids[name]=v
-				}
-			}
-			
-			var bubble_up=function(url,name,value)
-			{
-				var map={}
-				map[url]=true
-				var dirty=true
-				while(dirty)
-				{
-					dirty=false
-					for(var n in map)
-					{
-						var o=resource.all[ url ]
-						if(o)
-						{
-							for(i=0;i<o.length;i++)
-							{
-								if( !map[o.url] )
-								{
-									dirty=true
-									map[o.url]=o
-								}
-							}
-						}
-					}
-				}
-				
-				for(var n in map)
-				{
-					var v=map[n]
-					if(typeof v == "object")
-					{
-						v[name]=value
-					}
-				}
-				
-			}
-
-			for(var resource_name in resource_names ) // copy values upwards
-			{
-				for(n in tags) { var v=tags[n]
-					var o=resource[ resource_name ][ n ]
-					if(o)
-					{
-						for(i=0;i<o.length;i++)
-						{
-							o[i][resource_name]=o[i][resource_name] || v.any // pick any
-							if(v.en) { o[i][resource_name]=v.en } // prefer english
-						}
-					}
-				}
-			}
-
-			for(n in tags) { var v=tags[n]
-				if(v.label) { bubble_up(n,"label",v.label) }
-//				if(v.alt)   { bubble_up(n,"alt",v.alt) }
-			}
-
-
-			for(n in ids) { var v=ids[n]
-				delete v.url
-				if(v.parents)
-				{
-					for( np in v.parents){ var vp=v.parents[np] // scan parents
-						var it=ids[vp]
-						if(it)
-						{
-							if(!it.children) { it.children=[] } // link to children
-							it.children.push(n)
-						}
-					}
-				}
-			}
-
-
-			if(filenameout)
-			{
-				fs.writeFile( filenameout , json_stringify(ids,{ space: ' ' }) )
-				write_tsv( filenameout+".tsv" , ids )
-			}
-			else
-			{
-				console.log( json_stringify(ids,{ space: ' ' }) )
-			}
-
-//			fs.writeFile( "xml/core.json" , json_stringify(tags,{ space: ' ' }) )
-		}
-
-	});
-
-	parser.on('text', function (text) {
+	parser.ontext=function (text) {
 		text=text.trim();
 		if(text!="") // ignore white space
 		{
@@ -280,19 +193,125 @@ parsexml.import=function(filename,filenameout)
 			if(cdata)	{ 	top[1].push( (text) );	}
 			else		{	top[1].push( (text) );	}
 		}
-	});
+	}
 
 // maintain cdata text flag
-	parser.on('startCdata', function () { cdata=true; });
-	parser.on('endCdata', function () { cdata=false; });
+	parser.onopencdata=function () { cdata=true; }
+	parser.onclosecdata=function () { cdata=false; }
 
 //error?
-	parser.on('error', function (error) {
+	parser.onerror=function (error) {
 		console.error("\n XML ERROR "+error+" : "+filename);
+	}
+
+	await new Promise((resolve, reject) => {
+		fs.createReadStream(filename)
+		.pipe(parser)
+		.on('error',reject)
+		.on('end',resolve)
 	});
 
-	fs.createReadStream(filename).pipe(parser);
 
 
+
+console.log("\n finished reading xml")
+
+	// final cleanup
+
+	var ids={}
+	for(n in tags) { var v=tags[n]
+		var name=n.replace("http://aims.fao.org/aos/agrovoc/","")
+		if( name.substr(0,2)=="c_" )
+		{
+			ids[name]=v
+		}
+	}
+	
+	var bubble_up=function(url,name,value)
+	{
+		var map={}
+		map[url]=true
+		var dirty=true
+		while(dirty)
+		{
+			dirty=false
+			for(var n in map)
+			{
+				var o=resource.all[ url ]
+				if(o)
+				{
+					for(i=0;i<o.length;i++)
+					{
+						if( !map[o.url] )
+						{
+							dirty=true
+							map[o.url]=o
+						}
+					}
+				}
+			}
+		}
+		
+		for(var n in map)
+		{
+			var v=map[n]
+			if(typeof v == "object")
+			{
+				v[name]=value
+			}
+		}
+		
+	}
+
+	for(var resource_name in resource_names ) // copy values upwards
+	{
+		for(n in tags) { var v=tags[n]
+			var o=resource[ resource_name ][ n ]
+			if(o)
+			{
+				for(i=0;i<o.length;i++)
+				{
+					o[i][resource_name]=o[i][resource_name] || v.any // pick any
+					if(v.en) { o[i][resource_name]=v.en } // prefer english
+				}
+			}
+		}
+	}
+
+	for(n in tags) { var v=tags[n]
+		if(v.label) { bubble_up(n,"label",v.label) }
+//				if(v.alt)   { bubble_up(n,"alt",v.alt) }
+	}
+
+
+	for(n in ids) { var v=ids[n]
+		delete v.url
+		if(v.parents)
+		{
+			for( np in v.parents){ var vp=v.parents[np] // scan parents
+				var it=ids[vp]
+				if(it)
+				{
+					if(!it.children) { it.children=[] } // link to children
+					it.children.push(n)
+				}
+			}
+		}
+	}
+
+
+
+
+	if(filenameout)
+	{
+		console.log("writing "+filenameout)
+		fs.writeFileSync( filenameout , json_stringify(ids,{ space: ' ' }) )
+		write_tsv( filenameout+".tsv" , ids )
+	}
+	else
+	{
+		console.log( json_stringify(ids,{ space: ' ' }) )
+	}
+	
 	return stack[0][1];
 }

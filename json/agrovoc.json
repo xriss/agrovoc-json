@@ -14849,7 +14849,7 @@
   ]
  },
  "c_1442": {
-  "label": "Centre (Franc",
+  "label": "Centre (France)",
   "parents": [
    "c_3081"
   ]
@@ -44816,7 +44816,7 @@
   ]
  },
  "c_26412": {
-  "label": "Bo",
+  "label": "Botrytis allii",
   "parents": [
    "c_1029"
   ]
@@ -45538,7 +45538,7 @@
   ]
  },
  "c_26521": {
-  "label": "Heracleum sosnowsky",
+  "label": "Heracleum sosnowskyi",
   "parents": [
    "c_26519"
   ]
@@ -54663,7 +54663,7 @@
   ]
  },
  "c_2834": {
-  "label": "feed legum",
+  "label": "feed legumes",
   "parents": [
    "c_2843",
    "c_4255"
@@ -73738,7 +73738,7 @@
   ]
  },
  "c_31441": {
-  "label": "nitro",
+  "label": "nitrofen",
   "parents": [
    "c_24430"
   ]
@@ -98739,7 +98739,7 @@
   ]
  },
  "c_34744": {
-  "label": "Platanus occidental",
+  "label": "Platanus occidentalis",
   "parents": [
    "c_6001"
   ]
@@ -110127,7 +110127,7 @@
   ]
  },
  "c_37158": {
-  "label": "Channel catfi",
+  "label": "Channel catfish virus",
   "parents": [
    "c_3574"
   ]
@@ -127805,7 +127805,7 @@
   ]
  },
  "c_39885": {
-  "label": "Thoracocharax securi",
+  "label": "Thoracocharax securis",
   "parents": [
    "c_39883"
   ]
@@ -145677,7 +145677,7 @@
   ]
  },
  "c_42258": {
-  "label": "Aethi",
+  "label": "Aethiomastacembelus sexdecimspinus",
   "parents": [
    "c_42257"
   ]
@@ -158677,7 +158677,7 @@
   ]
  },
  "c_44046": {
-  "label": "Polynemidae (17077XXXX",
+  "label": "Polynemidae (17077XXXXX)",
   "parents": [
    "c_44005"
   ]
@@ -211370,7 +211370,7 @@
    "c_37576",
    "c_37577"
   ],
-  "label": "Pedioc",
+  "label": "Pediococcus",
   "parents": [
    "c_765"
   ]
