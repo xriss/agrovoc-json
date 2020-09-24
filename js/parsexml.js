@@ -14,57 +14,6 @@ var ls=function(a) { console.log(util.inspect(a,{depth:null})); }
 
 parsexml.parse=async function(filename,filenameout)
 {
-	
-	var write_tsv=function(filename,ids)
-	{
-		var lines=[]
-		
-		var dupe=function(dat)
-		{
-			var t=[]
-			for(var i=0;i<dat.length;i++)
-			{
-				t[i]=dat[i]
-			}
-			return t
-		}
-		
-		var recurse
-		recurse=function(id,dat)
-		{
-			if(!dat) // init
-			{
-				dat=[]
-			}
-			dat.push(id)
-			var it=ids[id]
-			if(it.parents) // recurse
-			{
-				for(var ip in it.parents)
-				{
-					var vp=it.parents[ip]
-					var dp=dupe(dat)
-					recurse(vp,dp)
-				}
-			}
-			else // stop and print
-			{
-				var t=[]
-				for(var i=0;i<dat.length;i++)
-				{
-					t[i]= dat[i]+"\t"+ids[ dat[i] ].label
-				}
-				lines.push(t.join("\t"))
-			}
-		}
-		for(var id in ids)
-		{
-			recurse(id)
-		}
-		
-		lines.sort()		
-		fs.writeFileSync( filename , lines.join("\n") )
-	}
 	var elems={}
 	var tags={}
 	
@@ -271,15 +220,26 @@ console.log("\n finished reading xml")
 			{
 				for(i=0;i<o.length;i++)
 				{
-					o[i][resource_name]=o[i][resource_name] || v.any // pick any
-					if(v.en) { o[i][resource_name]=v.en } // prefer english
+//					o[i][resource_name]=o[i][resource_name] || v.any // pick any
+//					if(v.en) { o[i][resource_name]=v.en } // prefer english
+
+// keep all languages with an any wildcard
+					o[i][resource_name]=o[i][resource_name] || {}
+					for(lang in v)
+					{
+						if(lang.length==2) // must be 2 letter code
+						{
+							o[i][resource_name][lang]=v[lang]
+						}
+					}
 				}
 			}
 		}
 	}
 
 	for(n in tags) { var v=tags[n]
-		if(v.label) { bubble_up(n,"label",v.label) }
+//		if(v.label) { bubble_up(n,"label",v.label) }
+		if(v.Alabel) { bubble_up(n,"label",v.label) }
 //				if(v.alt)   { bubble_up(n,"alt",v.alt) }
 	}
 
@@ -306,7 +266,6 @@ console.log("\n finished reading xml")
 	{
 		console.log("writing "+filenameout)
 		fs.writeFileSync( filenameout , json_stringify(ids,{ space: ' ' }) )
-		write_tsv( filenameout+".tsv" , ids )
 	}
 	else
 	{

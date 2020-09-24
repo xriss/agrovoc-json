@@ -1,3 +1,4 @@
 cd `dirname $0`
-../agrovoc-json import xml/agrovoc_2017-05-04_core.rdf json/agrovoc.json
+#../agrovoc-json import xml/agrovoc_2017-05-04_core.rdf json/agrovoc.json
+../agrovoc-json import xml/agrovoc_2020-09-02_core.rdf json/agrovoc.json
 
